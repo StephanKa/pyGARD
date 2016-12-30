@@ -1,0 +1,41 @@
+Component:
+    Name: Test_XXX
+    Version: 9.12.2016
+    Width: 32
+    Build : "00"
+    RegisterDefinition:
+        Register_1:
+            Name: Interrupt
+            Documentation: Text hier
+            Option:
+                read: True
+                write: False
+                clear_on_read: True
+            Bits:
+                IRQ1: 0
+                IRQ2: 1
+                IRQS: 6-2
+                ENABLE: 7
+                Undefined: 31-8
+        Register_2:
+            Name: Counter
+            Documentation: Text hier
+            Option:
+                read: False
+                write: True
+                clear_on_read: False
+            Bits:
+                CNT1: 5-0
+                CNT2: 12-6
+                CNT3: 31-20
+        Register_3:
+            Name: Test
+            Documentation: Text hier
+            Option:
+                read: False
+                write: True
+                clear_on_read: False
+            Bits:
+                TEST1: 5-0
+                TEST2: 12-6
+                TEST3: 31-20
