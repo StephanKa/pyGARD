@@ -109,6 +109,8 @@ architecture arch_imp of %%component_name is
   --------------------------------------------------
   ---- Number of Slave Registers
 %%slave_reg_definition
+  signal slv_reg_rden : std_logic;
+  signal slv_reg_wren : std_logic;
   signal reg_data_out :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
   signal byte_index : integer;
 
@@ -299,6 +301,7 @@ begin
   begin
     -- Address decoding for reading registers
     loc_addr := axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);
+    case loc_addr is
 %%read_process
     end case;
   end process;

@@ -26,7 +26,7 @@ class VhdlWriter():
     SLV_DEFINITION =            '''  signal slv_reg{0} :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);\n'''
     DATE_DEFINITION =           '''  constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}"; -- year, month, day, build number (one byte each)\n'''
     WHOLE_REG_DEFINITION =      '''  alias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
-    PARTIAL_REG_DEFINITION =    '''  alias a_{0} : std_logic is slv_reg{2}({1});\n'''
+    PARTIAL_REG_DEFINITION =    '''  alias a_{0} : {3} is slv_reg{2}({1});\n'''
 
     def __init__(self, template_path, output_name, yaml_object):
         self.template = self.__load_template_file(template_path)
@@ -155,12 +155,14 @@ class VhdlWriter():
             else:
                 name = 'slv_reg' + register[register.find('_') + 1 : ]
             if( len(bit_definition) == 1 ):
+                type = 'std_logic'
                 bits = bit_definition[0]
             elif( len(bit_definition) == 2 ):
+                type = 'std_logic_vector'
                 bits = '{0} downto {1}'.format(bit_definition[0], bit_definition[1])
             else:
                 raise Exception('Bit definition wrong! Please review {0}'.format(register))
-            temp += self.PARTIAL_REG_DEFINITION.format( name, bits, register[register.find('_') + 1 : ] )
+            temp += self.PARTIAL_REG_DEFINITION.format( name, bits, register[register.find('_') + 1 : ], type )
         return temp
 
 
