@@ -62,7 +62,7 @@ class VhdlWriter():
         slv_register = ''
         slv_list = list()
         whole_date = self.__format_date()
-        for reg in self.yaml_object.register_definitions.keys():
+        for reg in self.yaml_object.get_register_definitions().keys():
             reset += self.__format_reset_register(reg)
             write_register += self.__format_register_write(reg)
             read_register += self.__format_register_read(reg)
@@ -97,7 +97,7 @@ class VhdlWriter():
         return self.SLV_DEFINITION.format(register[register.find('_') + 1 : ])
 
     def __format_write_access(self, register):
-        temp_register = self.yaml_object.register_definitions[register]
+        temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['write']):
             return self.SAVE_WRITE_ACCESS.format(register[register.find('_') + 1 : ])
         else:
@@ -113,30 +113,30 @@ class VhdlWriter():
             return ''
 
     def __format_register_read(self, register):
-        temp_register = self.yaml_object.register_definitions[register]
+        temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['read']):
             if( temp_register is not None or temp_register != '' ):
                 name = 'a_{0}'.format(temp_register['Name'].replace(' ', '_').lower())
             else:
                 name = 'slv_reg_{0}'.format(register[register.find('_') + 1 : ])
             return self.READ_DEFINITION.format( int(register[register.find('_') + 1 : ]),
-                                                len(self.yaml_object.register_definitions.keys()),
+                                                len(self.yaml_object.get_register_definitions().keys()),
                                                 name,
                                                 self.__format_clear_on_read(temp_register, name) )
         else:
             return ''
 
     def __format_register_write(self, register):
-        temp_register = self.yaml_object.register_definitions[register]
+        temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['write']):
             return self.WRITE_DEFINITION.format( int(register[register.find('_') + 1 : ]),
-                                                 len(self.yaml_object.register_definitions.keys()),
+                                                 len(self.yaml_object.get_register_definitions().keys()),
                                                  register[register.find('_') + 1 : ])
         else:
             return ''
 
     def __format_register_name(self, register):
-        temp_register = self.yaml_object.register_definitions[register]
+        temp_register = self.yaml_object.get_register_definitions()[register]
         if( temp_register is not None or temp_register != '' ):
             name = temp_register['Name'].replace(' ', '_').lower()
         else:
@@ -146,7 +146,7 @@ class VhdlWriter():
                                                  register[register.find('_') + 1 : ] )
 
     def __format_partial_alias(self, register):
-        temp_register = self.yaml_object.register_definitions[register]
+        temp_register = self.yaml_object.get_register_definitions()[register]
         temp = ''
         for temp_bit in temp_register['Bits'].keys():
             bit_definition = str(temp_register['Bits'][temp_bit]).replace(' ', '').split('-')
