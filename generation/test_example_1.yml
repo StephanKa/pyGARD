@@ -6,7 +6,11 @@ Component:
     RegisterDefinition:
         Register_1:
             Name: Interrupt
-            Documentation: Text hier
+            Documentation: >
+                            Multiline Text
+                            Here
+                            Place
+                            Everything
             Option:
                 read: True
                 write: False

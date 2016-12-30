@@ -25,7 +25,7 @@ class VhdlWriter():
     RESET_REG =                 '''        slv_reg{0} <= (others => '0');\n'''
     SLV_DEFINITION =            '''  signal slv_reg{0} :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);\n'''
     DATE_DEFINITION =           '''  constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}"; -- year, month, day, build number (one byte each)\n'''
-    WHOLE_REG_DEFINITION =      '''  alias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
+    WHOLE_REG_DEFINITION =      '''  {3}\n  alias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
     PARTIAL_REG_DEFINITION =    '''  alias a_{0} : {3} is slv_reg{2}({1});\n'''
 
     def __init__(self, template_path, output_name, yaml_object):
@@ -87,8 +87,12 @@ class VhdlWriter():
     def __format_date(self):
         return self.DATE_DEFINITION.format( self.yaml_object.get_name().upper(),
                                             self.yaml_object.register_width,
-                                            self.yaml_object.get_date_information("%y%m%d") + 
+                                            self.yaml_object.get_date_information("%y%m%d") +
                                             self.yaml_object.get_build_version() )
+
+    def __format_documentation(self, register):
+        temp_register = self.yaml_object.get_register_definitions()[register]
+        return '-- {0}'.format(temp_register['Documentation'].replace('\n', ''))
 
     def __format_read_process_list(self, register_list):
         return self.READ_PROCESS_DEFINITION.format(','.join(register_list))
@@ -143,7 +147,8 @@ class VhdlWriter():
             name = 'slv_reg' + register[register.find('_') + 1 : ]
         return self.WHOLE_REG_DEFINITION.format( name,
                                                  self.yaml_object.register_width,
-                                                 register[register.find('_') + 1 : ] )
+                                                 register[register.find('_') + 1 : ],
+                                                 self.__format_documentation(register))
 
     def __format_partial_alias(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
