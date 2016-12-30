@@ -8,11 +8,12 @@ import time
 
 '''
 
+
 class VhdlIndentationFormatter():
 
     INDENTATION = ' '*2
-    INDENTATION_WORDS = {'words' : ['entity', 'architecture', 'begin', 'if', 'elsif', 'else', 'case', 'when','for'], 'value' : 1}
-    DEINDENTATION_WORDS = {'words' : ['end', 'else', 'elsif', 'when'], 'value' : -1}
+    INDENTATION_WORDS = {'words': ['entity', 'architecture', 'begin', 'if', 'elsif', 'else', 'case', 'when', 'for'], 'value': 1}
+    DEINDENTATION_WORDS = {'words': ['end', 'else', 'elsif', 'when'], 'value': -1}
 
     def __init__(self, file_input_string):
         self.current_indent = 0
@@ -53,18 +54,18 @@ class VhdlWriter():
     READ_DEFINITION =           '''when b"{0:0{1}b}" =>\nreg_data_out <= {2};{3}'''
     CLEAR_ON_READ_DEFININTION = '''\n{0} <= (others => '0');\n'''
     READ_PROCESS_DEFINITION =   '''process ({0}, axi_araddr, S_AXI_ARESETN, slv_reg_rden)'''
-    WRITE_PROCESS_ELSE =        ('''else\nloc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);\n''' + 
+    WRITE_PROCESS_ELSE =        ('''else\nloc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);\n''' +
                                  '''if (slv_reg_wren = '1') then\ncase loc_addr is\n''')
-    WRITE_DEFINITION =          ('''when b"{0:0{1}b}" =>\nfor byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop\n''' + 
+    WRITE_DEFINITION =          ('''when b"{0:0{1}b}" =>\nfor byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop\n''' +
                                 '''if ( S_AXI_WSTRB(byte_index) = '1' ) then\n''' +
                                 '''-- Respective byte enables are asserted as per write strobes\n-- slave registor {2}\n''' +
-                                '''slv_reg{2}(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);\n''' + 
+                                '''slv_reg{2}(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);\n''' +
                                 '''end if;\nend loop;\n''')
     WRITE_PROCESS_WHEN =        '''when others =>\n'''
     SAVE_WRITE_ACCESS =         '''slv_reg{0} <= slv_reg{0};\n'''
     RESET_REG =                 '''slv_reg{0} <= (others => '0');\n'''
     SLV_DEFINITION =            '''signal slv_reg{0} :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);\n'''
-    DATE_DEFINITION =           ('''constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}";''' + 
+    DATE_DEFINITION =           ('''constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}";''' +
                                  '''-- year, month, day, build number (one byte each)\n''')
     WHOLE_REG_DEFINITION =      '''{3}\nalias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
     PARTIAL_REG_DEFINITION =    '''alias a_{0} : {3} is slv_reg{2}({1});\n'''
@@ -78,13 +79,13 @@ class VhdlWriter():
     def __load_template_file(self, path):
         return open(path, 'rb').read()
 
-    def __indentation(self, times = 1):
+    def __indentation(self, times=1):
         return times * '  '
 
     def write_file(self, **kwargs):
         with open(self.output_name, 'wb') as file:
             s = VhdlTemplate(self.template)
-            t = VhdlIndentationFormatter(s.substitute( component_name= kwargs['component_name'],
+            t = VhdlIndentationFormatter(s.substitute(component_name= kwargs['component_name'],
                                      width = kwargs['width'],
                                      slave_reg_definition = kwargs['slave_reg_definition'],
                                      component_version = kwargs['component_version'],
@@ -112,25 +113,25 @@ class VhdlWriter():
             partial_register += self.__format_partial_alias(reg)
             whole_register += self.__format_register_name(reg)
             slv_register += self.__format_slv_definition(reg)
-            slv_list.append(' slv_reg' + reg[reg.find('_') + 1 : ])
-        self.write_file( alias_definitions      = whole_register + partial_register,
-                         width                  = self.yaml_object.register_width + 1,
-                         component_version      = whole_date,
-                         write_process          = reset +
-                                                  self.WRITE_PROCESS_ELSE +
-                                                  write_register +
-                                                  self.WRITE_PROCESS_WHEN +
-                                                  save_register,
-                         read_process_sensivity = self.__format_read_process_list(slv_list),
-                         read_process           = read_register,
-                         component_name         = self.yaml_object.get_name(),
-                         slave_reg_definition   = slv_register )
+            slv_list.append(' slv_reg' + reg[reg.find('_') + 1:])
+        self.write_file(alias_definitions      = whole_register + partial_register,
+                        width                  = self.yaml_object.register_width + 1,
+                        component_version      = whole_date,
+                        write_process          = reset +
+                                                 self.WRITE_PROCESS_ELSE +
+                                                 write_register +
+                                                 self.WRITE_PROCESS_WHEN +
+                                                 save_register,
+                        read_process_sensivity = self.__format_read_process_list(slv_list),
+                        read_process           = read_register,
+                        component_name         = self.yaml_object.get_name(),
+                        slave_reg_definition   = slv_register)
 
     def __format_date(self):
-        return self.DATE_DEFINITION.format( self.yaml_object.get_name().upper(),
-                                            self.yaml_object.register_width,
-                                            self.yaml_object.get_date_information("%y%m%d") +
-                                            self.yaml_object.get_build_version() )
+        return self.DATE_DEFINITION.format(self.yaml_object.get_name().upper(),
+                                           self.yaml_object.register_width,
+                                           self.yaml_object.get_date_information("%y%m%d") +
+                                           self.yaml_object.get_build_version())
 
     def __format_documentation(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
@@ -140,17 +141,17 @@ class VhdlWriter():
         return self.READ_PROCESS_DEFINITION.format(','.join(register_list))
 
     def __format_slv_definition(self, register):
-        return self.SLV_DEFINITION.format(register[register.find('_') + 1 : ])
+        return self.SLV_DEFINITION.format(register[register.find('_') + 1:])
 
     def __format_write_access(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['write']):
-            return self.SAVE_WRITE_ACCESS.format(register[register.find('_') + 1 : ])
+            return self.SAVE_WRITE_ACCESS.format(register[register.find('_') + 1:])
         else:
             return ''
 
     def __format_reset_register(self, register):
-        return self.RESET_REG.format(register[register.find('_') + 1 : ])
+        return self.RESET_REG.format(register[register.find('_') + 1:])
 
     def __format_clear_on_read(self, register, name):
         if(register['Option']['clear_on_read']):
@@ -161,55 +162,55 @@ class VhdlWriter():
     def __format_register_read(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['read']):
-            if( temp_register is not None or temp_register != '' ):
+            if(temp_register is not None or temp_register != ''):
                 name = 'a_{0}'.format(temp_register['Name'].replace(' ', '_').lower())
             else:
-                name = 'slv_reg_{0}'.format(register[register.find('_') + 1 : ])
-            return self.READ_DEFINITION.format( int(register[register.find('_') + 1 : ]),
-                                                len(self.yaml_object.get_register_definitions().keys()),
-                                                name,
-                                                self.__format_clear_on_read(temp_register, name) )
+                name = 'slv_reg_{0}'.format(register[register.find('_') + 1:])
+            return self.READ_DEFINITION.format(int(register[register.find('_') + 1:]),
+                                               len(self.yaml_object.get_register_definitions().keys()),
+                                               name,
+                                               self.__format_clear_on_read(temp_register, name))
         else:
             return ''
 
     def __format_register_write(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
         if(temp_register['Option']['write']):
-            return self.WRITE_DEFINITION.format( int(register[register.find('_') + 1 : ]),
-                                                 len(self.yaml_object.get_register_definitions().keys()),
-                                                 register[register.find('_') + 1 : ])
+            return self.WRITE_DEFINITION.format(int(register[register.find('_') + 1:]),
+                                                len(self.yaml_object.get_register_definitions().keys()),
+                                                register[register.find('_') + 1:])
         else:
             return ''
 
     def __format_register_name(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
-        if( temp_register is not None or temp_register != '' ):
+        if(temp_register is not None or temp_register != ''):
             name = temp_register['Name'].replace(' ', '_').lower()
         else:
-            name = 'slv_reg' + register[register.find('_') + 1 : ]
-        return self.WHOLE_REG_DEFINITION.format( name,
-                                                 self.yaml_object.register_width,
-                                                 register[register.find('_') + 1 : ],
-                                                 self.__format_documentation(register))
+            name = 'slv_reg' + register[register.find('_') + 1:]
+        return self.WHOLE_REG_DEFINITION.format(name,
+                                                self.yaml_object.register_width,
+                                                register[register.find('_') + 1:],
+                                                self.__format_documentation(register))
 
     def __format_partial_alias(self, register):
         temp_register = self.yaml_object.get_register_definitions()[register]
         temp = ''
         for temp_bit in temp_register['Bits'].keys():
             bit_definition = str(temp_register['Bits'][temp_bit]).replace(' ', '').split('-')
-            if( temp_register is not None or temp_register != '' ):
+            if(temp_register is not None or temp_register != ''):
                 name = '{0}_{1}'.format(temp_register['Name'].replace(' ', '_').lower(), temp_bit.lower())
             else:
-                name = 'slv_reg' + register[register.find('_') + 1 : ]
-            if( len(bit_definition) == 1 ):
+                name = 'slv_reg' + register[register.find('_') + 1:]
+            if(len(bit_definition) == 1):
                 type = 'std_logic'
                 bits = bit_definition[0]
-            elif( len(bit_definition) == 2 ):
+            elif(len(bit_definition) == 2):
                 type = 'std_logic_vector'
                 bits = '{0} downto {1}'.format(bit_definition[0], bit_definition[1])
             else:
                 raise Exception('Bit definition wrong! Please review {0}'.format(register))
-            temp += self.PARTIAL_REG_DEFINITION.format( name, bits, register[register.find('_') + 1 : ], type )
+            temp += self.PARTIAL_REG_DEFINITION.format(name, bits, register[register.find('_') + 1:], type)
         return temp
 
 
@@ -241,6 +242,7 @@ class YamlDefinition():
 
     def __read_input(self):
         return yaml.load(open(self.path, 'rb'))
+
 
 if __name__ == '__main__':
     begin_time = time.time()
