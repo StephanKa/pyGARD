@@ -17,7 +17,7 @@ class VhdlWriter():
 
     READ_DEFINITION =           '''      when b"{0:0{1}b}" =>\n        reg_data_out <= {2};{3}'''
     CLEAR_ON_READ_DEFININTION = '''\n        {0} <= (others => '0');\n'''
-    READ_PROCESS_DEFINITION =   '''  process ({0}, axi_araddr, S_AXI_ARESETN, slv_reg_rden)\n'''
+    READ_PROCESS_DEFINITION =   '''  process ({0}, axi_araddr, S_AXI_ARESETN, slv_reg_rden)'''
     WRITE_PROCESS_ELSE =        '''      else\n        loc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);\n        if (slv_reg_wren = '1') then\n          case loc_addr is\n'''
     WRITE_DEFINITION =          '''            when b"{0:0{1}b}" =>\n              for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop\n                if ( S_AXI_WSTRB(byte_index) = '1' ) then\n                  -- Respective byte enables are asserted as per write strobes\n                  -- slave registor {2}\n                  slv_reg{2}(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);\n                end if;\n              end loop;\n'''
     WRITE_PROCESS_WHEN =        '''            when others =>\n'''
@@ -72,7 +72,7 @@ class VhdlWriter():
             slv_register += self.__format_slv_definition(reg)
             slv_list.append(' slv_reg' + reg[reg.find('_') + 1 : ])
         self.write_file( alias_definitions      = whole_register + partial_register,
-                         width                  = self.yaml_object.register_width,
+                         width                  = self.yaml_object.register_width + 1,
                          component_version      = whole_date,
                          write_process          = reset +
                                                   self.WRITE_PROCESS_ELSE +

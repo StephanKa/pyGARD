@@ -303,6 +303,8 @@ begin
     loc_addr := axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);
     case loc_addr is
 %%read_process
+      when others =>
+        reg_data_out  <= (others => '0');
     end case;
   end process;
 
