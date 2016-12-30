@@ -35,7 +35,7 @@ PutNameHere: N				(here you can specify a bit name as it will be used for alias 
 PutNameHere: N-0
 
 ### Example
-```vhdl
+```yaml
 Component:
     Name: Test_XXX
     Version: 9.12.2016
