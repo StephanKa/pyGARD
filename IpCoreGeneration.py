@@ -8,6 +8,41 @@ import time
 
 '''
 
+class VhdlIndentationFormatter():
+
+    INDENTATION = ' '*2
+    INDENTATION_WORDS = {'words' : ['entity', 'architecture', 'begin', 'if', 'elsif', 'else', 'case', 'when','for'], 'value' : 1}
+    DEINDENTATION_WORDS = {'words' : ['end', 'else', 'elsif', 'when'], 'value' : -1}
+
+    def __init__(self, file_input_string):
+        self.current_indent = 0
+        self.first_begin = False
+        self.file_input_string = file_input_string.split('\n')
+        self.final_list = list()
+        self.__iterate_through_string_list()
+
+    def __iterate_through_string_list(self):
+        for temp_line in self.file_input_string:
+            if('begin' in temp_line and not self.first_begin):
+                self.current_indent = 0
+                self.first_begin = True
+            if(len(temp_line.split()) == 0):
+                self.final_list.append(temp_line)
+                continue
+            if(any(word in temp_line.split()[0] for word in self.DEINDENTATION_WORDS['words'])):
+                self.__indentation(self.DEINDENTATION_WORDS['value'])
+            if(any(word in temp_line.split()[0] for word in self.INDENTATION_WORDS['words'])):
+                self.final_list.append('{0}{1}'.format(self.INDENTATION * self.current_indent, temp_line))
+                self.__indentation(self.INDENTATION_WORDS['value'])
+                continue
+            self.final_list.append('{0}{1}'.format(self.INDENTATION * self.current_indent, temp_line))
+
+    def __indentation(self, value=0):
+        self.current_indent += value
+
+    def get_finalized_string(self):
+        return '\n'.join(self.final_list)
+
 
 class VhdlTemplate(string.Template):
     delimiter = "%%"
@@ -15,18 +50,24 @@ class VhdlTemplate(string.Template):
 
 class VhdlWriter():
 
-    READ_DEFINITION =           '''      when b"{0:0{1}b}" =>\n        reg_data_out <= {2};{3}'''
-    CLEAR_ON_READ_DEFININTION = '''\n        {0} <= (others => '0');\n'''
-    READ_PROCESS_DEFINITION =   '''  process ({0}, axi_araddr, S_AXI_ARESETN, slv_reg_rden)'''
-    WRITE_PROCESS_ELSE =        '''      else\n        loc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);\n        if (slv_reg_wren = '1') then\n          case loc_addr is\n'''
-    WRITE_DEFINITION =          '''            when b"{0:0{1}b}" =>\n              for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop\n                if ( S_AXI_WSTRB(byte_index) = '1' ) then\n                  -- Respective byte enables are asserted as per write strobes\n                  -- slave registor {2}\n                  slv_reg{2}(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);\n                end if;\n              end loop;\n'''
-    WRITE_PROCESS_WHEN =        '''            when others =>\n'''
-    SAVE_WRITE_ACCESS =         '''              slv_reg{0} <= slv_reg{0};\n'''
-    RESET_REG =                 '''        slv_reg{0} <= (others => '0');\n'''
-    SLV_DEFINITION =            '''  signal slv_reg{0} :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);\n'''
-    DATE_DEFINITION =           '''  constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}"; -- year, month, day, build number (one byte each)\n'''
-    WHOLE_REG_DEFINITION =      '''  {3}\n  alias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
-    PARTIAL_REG_DEFINITION =    '''  alias a_{0} : {3} is slv_reg{2}({1});\n'''
+    READ_DEFINITION =           '''when b"{0:0{1}b}" =>\nreg_data_out <= {2};{3}'''
+    CLEAR_ON_READ_DEFININTION = '''\n{0} <= (others => '0');\n'''
+    READ_PROCESS_DEFINITION =   '''process ({0}, axi_araddr, S_AXI_ARESETN, slv_reg_rden)'''
+    WRITE_PROCESS_ELSE =        ('''else\nloc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);\n''' + 
+                                 '''if (slv_reg_wren = '1') then\ncase loc_addr is\n''')
+    WRITE_DEFINITION =          ('''when b"{0:0{1}b}" =>\nfor byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop\n''' + 
+                                '''if ( S_AXI_WSTRB(byte_index) = '1' ) then\n''' +
+                                '''-- Respective byte enables are asserted as per write strobes\n-- slave registor {2}\n''' +
+                                '''slv_reg{2}(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);\n''' + 
+                                '''end if;\nend loop;\n''')
+    WRITE_PROCESS_WHEN =        '''when others =>\n'''
+    SAVE_WRITE_ACCESS =         '''slv_reg{0} <= slv_reg{0};\n'''
+    RESET_REG =                 '''slv_reg{0} <= (others => '0');\n'''
+    SLV_DEFINITION =            '''signal slv_reg{0} :std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);\n'''
+    DATE_DEFINITION =           ('''constant {0}_VERSION : std_logic_vector({1} downto 0) := x"{2}";''' + 
+                                 '''-- year, month, day, build number (one byte each)\n''')
+    WHOLE_REG_DEFINITION =      '''{3}\nalias a_{0} : std_logic_vector({1} downto 0) is slv_reg{2}({1} downto 0);\n'''
+    PARTIAL_REG_DEFINITION =    '''alias a_{0} : {3} is slv_reg{2}({1});\n'''
 
     def __init__(self, template_path, output_name, yaml_object):
         self.template = self.__load_template_file(template_path)
@@ -43,14 +84,15 @@ class VhdlWriter():
     def write_file(self, **kwargs):
         with open(self.output_name, 'wb') as file:
             s = VhdlTemplate(self.template)
-            file.write(s.substitute( component_name= kwargs['component_name'],
+            t = VhdlIndentationFormatter(s.substitute( component_name= kwargs['component_name'],
                                      width = kwargs['width'],
                                      slave_reg_definition = kwargs['slave_reg_definition'],
                                      component_version = kwargs['component_version'],
                                      alias_definitions = kwargs['alias_definitions'],
                                      write_process = kwargs['write_process'],
                                      read_process_sensivity = kwargs['read_process_sensivity'],
-                                     read_process = kwargs['read_process']) )
+                                     read_process = kwargs['read_process']))
+            file.write(t.get_finalized_string())
 
     def format_string(self):
         reset = ''
