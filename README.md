@@ -69,6 +69,6 @@ Component:
 ```
 
 ## To-Do
-- implement Documentation
+- ~~implement Documentation~~
 - make keynames case insensitive
 - add more features (?)
