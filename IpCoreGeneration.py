@@ -77,13 +77,13 @@ class VhdlWriter():
         self.format_string()
 
     def __load_template_file(self, path):
-        return open(path, 'rb').read()
+        return open(path, 'r').read()
 
     def __indentation(self, times=1):
         return times * '  '
 
     def write_file(self, **kwargs):
-        with open(self.output_name, 'wb') as file:
+        with open(self.output_name, 'w') as file:
             s = VhdlTemplate(self.template)
             t = VhdlIndentationFormatter(s.substitute(component_name= kwargs['component_name'],
                                      width = kwargs['width'],
